@@ -1,0 +1,363 @@
+- id: '1707927514356'
+  alias: BMotion
+  description: ''
+  use_blueprint:
+    path: homeassistant/motion_light.yaml
+    input:
+      motion_entity: binary_sensor.bmotion_motion
+      light_target:
+        entity_id: light.group_bathroom
+- id: '1707927634977'
+  alias: Emotion
+  description: ''
+  use_blueprint:
+    path: homeassistant/motion_light.yaml
+    input:
+      motion_entity: binary_sensor.emotion_motion
+      light_target:
+        entity_id: light.group_entry
+      no_motion_wait: 60
+- id: '1707930534922'
+  alias: Onward!
+  description: ''
+  trigger:
+  - platform: time
+    at: 06:15:00
+    id: weekday
+  - platform: time
+    at: 08:00:00
+    id: weekend
+  - platform: state
+    entity_id:
+    - input_boolean.anyone_home
+    to: 'on'
+    id: anyone_home
+  condition:
+  - condition: or
+    conditions:
+    - condition: and
+      conditions:
+      - condition: trigger
+        id:
+        - weekday
+      - condition: time
+        weekday:
+        - mon
+        - tue
+        - wed
+        - thu
+        - fri
+    - condition: and
+      conditions:
+      - condition: trigger
+        id:
+        - weekend
+      - condition: time
+        weekday:
+        - sun
+        - sat
+    - condition: trigger
+      id:
+      - anyone_home
+  action:
+  - service: light.turn_on
+    metadata: {}
+    data:
+      transition: 300
+    target:
+      entity_id:
+      - light.erik_light
+      - light.rope_light
+      - light.stove_light
+      - light.vulcan_light
+      - light.phil_light
+  - if:
+    - condition: trigger
+      id:
+      - weekday
+      - weekend
+    then:
+    - service: switch.turn_on
+      target:
+        device_id:
+        - 6fa81328ac090c9153be898d12e2f17a
+      data: {}
+    - device_id: f18cd5327f41c0374eb83fe36317cf9d
+      domain: cover
+      entity_id: 05020f99197f6a9e7bdb6c1c79b5ec42
+      type: set_position
+      position: 10
+    - device_id: f18cd5327f41c0374eb83fe36317cf9d
+      domain: cover
+      entity_id: a63b34e98c58c894a8199e9238451450
+      type: set_position
+      position: 50
+    - device_id: f18cd5327f41c0374eb83fe36317cf9d
+      domain: cover
+      entity_id: 6a0c28cdf8ad014fbbef8b8122ec7f6d
+      type: set_position
+      position: 10
+    - device_id: ad2c7f3bc7689b3eced0854e7597f5f1
+      domain: cover
+      entity_id: f481efc155d2282ce89320486e4c7fe1
+      type: set_position
+      position: 65
+  - if:
+    - condition: trigger
+      id:
+      - anyone_home
+    then:
+    - service: climate.set_temperature
+      metadata: {}
+      data:
+        temperature: 65
+        hvac_mode: heat
+      target:
+        entity_id: climate.heater_pid_climate_controller
+  mode: single
+- id: '1707931473124'
+  alias: Bye
+  description: ''
+  trigger:
+  - platform: time
+    at: '22:30:00'
+    id: sleepy_time
+  - platform: state
+    entity_id:
+    - input_boolean.anyone_home
+    id: anyone_home
+    to: 'off'
+  condition: []
+  action:
+  - service: switch.turn_off
+    metadata: {}
+    data: {}
+    target:
+      device_id: 6fa81328ac090c9153be898d12e2f17a
+  - if:
+    - condition: trigger
+      id:
+      - sleepy_time
+    then:
+    - service: switch.turn_on
+      metadata: {}
+      data: {}
+      target:
+        device_id:
+        - ad2c7f3bc7689b3eced0854e7597f5f1
+        - f18cd5327f41c0374eb83fe36317cf9d
+    - service: climate.set_temperature
+      metadata: {}
+      data:
+        temperature: 60
+      target:
+        entity_id: climate.heater_pid_climate_controller
+  - if:
+    - condition: trigger
+      id:
+      - anyone_home
+    then:
+    - service: climate.turn_off
+      metadata: {}
+      data: {}
+      target:
+        entity_id: climate.heater_pid_climate_controller
+  - service: light.turn_off
+    metadata: {}
+    data:
+      transition: 120
+    target:
+      entity_id:
+      - light.group_bathroom
+      - light.group_chandler
+      - light.group_entry
+      - light.group_kitchen
+      - light.erik_light
+      - light.harold_light
+      - light.maude_light
+      - light.phil_light
+      - light.rope_light
+      - light.stove_light
+      - light.vulcan_light
+  mode: single
+- id: '1707935420764'
+  alias: Lower Volume
+  description: ''
+  trigger:
+  - platform: time
+    at: '21:00:00'
+  condition:
+  - condition: state
+    entity_id: input_boolean.anyone_home
+    state: 'on'
+  - condition: state
+    entity_id: media_player.prong
+    state: 'on'
+  action:
+  - service: media_player.volume_set
+    metadata: {}
+    data:
+      volume_level: 0.2
+    target:
+      entity_id: media_player.prong_samsung
+  mode: single
+- id: '1708445717490'
+  alias: KMotion
+  description: ''
+  trigger:
+  - type: motion
+    platform: device
+    device_id: ee8fe718aaa90eca107268b369572c3d
+    entity_id: 289fe7554caaa84bf24e6c60caf23996
+    domain: binary_sensor
+  condition: []
+  action:
+  - service: light.turn_on
+    metadata: {}
+    data: {}
+    target:
+      entity_id: light.group_kitchen
+  - if:
+    - condition: device
+      device_id: c7329de75150c48eef6138a229fd8aec
+      domain: media_player
+      entity_id: e7c7264e6384842c3f92f96e68b8f4c7
+      type: is_playing
+    then:
+    - service: media_player.media_pause
+      metadata: {}
+      data: {}
+      target:
+        entity_id: media_player.prong
+  - if:
+    - condition: sun
+      before: sunset
+      after: sunrise
+    then:
+    - device_id: ad2c7f3bc7689b3eced0854e7597f5f1
+      domain: cover
+      entity_id: f481efc155d2282ce89320486e4c7fe1
+      type: set_position
+      position: 50
+  - wait_for_trigger:
+    - type: no_motion
+      platform: device
+      device_id: ee8fe718aaa90eca107268b369572c3d
+      entity_id: 289fe7554caaa84bf24e6c60caf23996
+      domain: binary_sensor
+      for:
+        hours: 0
+        minutes: 1
+        seconds: 30
+    continue_on_timeout: false
+  - service: light.turn_off
+    metadata: {}
+    data: {}
+    target:
+      entity_id: light.group_kitchen
+  - if:
+    - condition: sun
+      before: sunset
+      after: sunrise
+    then:
+    - device_id: ad2c7f3bc7689b3eced0854e7597f5f1
+      domain: cover
+      entity_id: f481efc155d2282ce89320486e4c7fe1
+      type: set_position
+      position: 70
+  mode: restart
+- id: '1708446778653'
+  alias: Brrrr
+  description: ''
+  trigger:
+  - platform: time
+    at: 04:00:00
+  condition:
+  - condition: state
+    entity_id: input_boolean.anyone_home
+    state: 'on'
+  action:
+  - service: climate.set_temperature
+    metadata: {}
+    data:
+      hvac_mode: heat
+      temperature: 68
+    target:
+      entity_id: climate.heater_pid_climate_controller
+  mode: single
+- id: '1708646656223'
+  alias: Phi Shutdown
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - input_boolean.phi
+    id: phi_boolean
+  - platform: device
+    type: changed_states
+    device_id: 4f45bf360d06636a37746f5de11fc861
+    entity_id: 82ce4532c9dbbda34c83bd0410d05622
+    domain: switch
+    id: phi_switch
+  condition: []
+  action:
+  - if:
+    - condition: trigger
+      id:
+      - phi_switch
+    then:
+    - if:
+      - condition: state
+        entity_id: switch.phi_switch
+        state: 'on'
+      then:
+      - service: input_boolean.turn_on
+        metadata: {}
+        data: {}
+        target:
+          entity_id: input_boolean.phi
+      else:
+      - service: input_boolean.turn_off
+        metadata: {}
+        data: {}
+        target:
+          entity_id: input_boolean.phi
+    else:
+    - if:
+      - condition: state
+        entity_id: input_boolean.phi
+        state: 'on'
+      then:
+      - service: switch.turn_on
+        metadata: {}
+        data: {}
+        target:
+          entity_id: switch.phi_switch
+      else:
+      - if:
+        - condition: state
+          entity_id: sensor.ph_current_print_state
+          state: printing
+        then:
+        - wait_for_trigger:
+          - platform: state
+            entity_id:
+            - sensor.ph_current_print_state
+            from: printing
+          continue_on_timeout: false
+      - if:
+        - condition: numeric_state
+          entity_id: sensor.ph_extruder_temperature
+          above: 50
+        then:
+        - wait_for_trigger:
+          - platform: numeric_state
+            entity_id:
+            - sensor.ph_extruder_temperature
+            below: 50
+          continue_on_timeout: false
+      - service: script.phi_shutdown
+        metadata: {}
+        data: {}
+  mode: single
+  max_exceeded: silent
