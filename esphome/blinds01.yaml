@@ -1,0 +1,27 @@
+# IDs...
+# … must start with a letter and can end with numbers.
+# … must not have a space in the name.
+# … can not have special characters except the underscore (“_“).
+# … must not be a keyword.
+
+# common substitutions for all covers/steppers
+# use "${substitution}" to invoke
+substitutions:
+  name: "blinds01"
+  friendly_name: "Kitchen Blinds"
+  board: "seeed_xiao_esp32c3"
+  delay: "1 s"
+                
+# board/wifi/ota stuff
+packages:
+  device_base: !include .esp32.yaml
+# cover/stepper 1 definition
+  blind01: !include 
+    file: .blind.yaml
+    vars:
+      position_max: "11000"
+      blind_number: "1"
+      enable_pin: "2"
+      step_pin: "4"
+      dir_pin: "3"
+      dir_inverted: "true"

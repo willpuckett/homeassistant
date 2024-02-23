@@ -1,0 +1,199 @@
+esphome:
+  on_boot:
+    - priority: -200.0
+      then: 
+      - stepper.report_position: # Set stepper to global variable
+          id: stepper_${blind_number}
+          position: !lambda return id(stepper_${blind_number}_global);
+      - stepper.set_target: # Set stepper to global variable
+          id: stepper_${blind_number}
+          target: !lambda return id(stepper_${blind_number}_global);
+      - if: # If blind is Closed
+          condition:
+            - lambda: 'return id(stepper_${blind_number}_global) == 0;'
+          then: # Publish state etc.
+            - cover.template.publish:
+                id: ${name}_${blind_number}
+                state: CLOSED
+                current_operation: IDLE
+      - if: # If blind is Open
+          condition:
+            - lambda: 'return id(stepper_${blind_number}_global) == id(endstop_${blind_number});'
+          then: # Publish state etc.
+            - cover.template.publish:
+                id: ${name}_${blind_number}
+                state: OPEN
+                current_operation: IDLE
+      - if: # If blind is Neither
+          condition:
+            - lambda: 'return (id(stepper_${blind_number}_global) != 0) && (id(stepper_${blind_number}_global) != id(endstop_${blind_number}));'
+          then: #  # Publish state etc.
+            - cover.template.publish:
+                id: ${name}_${blind_number}
+                position: !lambda 'return (float(float(id(stepper_${blind_number}).current_position) / float(id(endstop_${blind_number}))));' 
+                current_operation: IDLE
+
+globals:
+  - id: stepper_${blind_number}_global # Integer for storing the stepper position in case of reboot
+    type: int
+    restore_value: True
+    initial_value: '0'
+
+  - id: openclosed_${blind_number} # Boolean to store OPEN/CLOSED state
+    type: bool
+    restore_value: True
+    initial_value: '0'
+
+  - id: endstop_${blind_number} # Variable for storing ENDSTOP (how far to move stepper)
+    type: int
+    restore_value: True
+    initial_value: "${position_max}"   # this is the max value
+
+
+stepper:
+  - platform: a4988
+    id: stepper_${blind_number}
+    step_pin: ${step_pin}
+    dir_pin: 
+      number: ${dir_pin}
+      inverted: ${dir_inverted}
+    sleep_pin: 
+      number: ${enable_pin}
+      inverted: true  # inverted since using enable pin
+    max_speed: 2000
+    acceleration: 1000
+    deceleration: 1000
+    
+cover:
+  - platform: template
+    name: "${blind_number}"
+    id: ${name}_${blind_number}
+    open_action:
+      then:
+        - logger.log: "Opening"
+        - stepper.set_target: 
+            id: stepper_${blind_number}
+            target: "${position_max}"
+        - while:
+            condition:
+              lambda: 'return id(stepper_${blind_number}).current_position < id(endstop_${blind_number});'
+            then:
+              - cover.template.publish:
+                  id: ${name}_${blind_number}
+                  position: !lambda 'return (float(float(id(stepper_${blind_number}).current_position) / float(id(endstop_${blind_number}))));' 
+                  current_operation: OPENING
+              - delay: ${delay}
+        - globals.set: # Set global to current position
+            id: stepper_${blind_number}_global
+            value: !lambda return id(stepper_${blind_number}).current_position; 
+        - globals.set: # Set toggle to OPEN (No need for 'optimistic mode')
+            id: openclosed_${blind_number}
+            value: '1'
+        - cover.template.publish:
+            id: ${name}_${blind_number}
+            state: OPEN 
+            current_operation: IDLE
+    close_action:
+      then:
+        - logger.log: "Closing"
+        - stepper.set_target: # Send stepper to 0
+            id: stepper_${blind_number}
+            target: '0'
+        - while:
+            condition:
+              lambda: 'return id(stepper_${blind_number}).current_position > 0;'
+            then:
+              - cover.template.publish:
+                  id: ${name}_${blind_number}
+                  position: !lambda 'return (float(float(id(stepper_${blind_number}).current_position) / float(id(endstop_${blind_number}))));' 
+                  current_operation: CLOSING
+              - delay: ${delay}
+        - globals.set: # Set global to current position
+            id: stepper_${blind_number}_global
+            value: !lambda return id(stepper_${blind_number}).current_position; 
+        - globals.set: # Set toggle to CLOSED (No need for 'optimistic mode')
+            id: openclosed_${blind_number}
+            value: '0'
+        - cover.template.publish:
+            id: ${name}_${blind_number}
+            state: CLOSED
+            current_operation: IDLE
+    position_action:
+      then:
+        - stepper.set_target:
+            id: stepper_${blind_number}
+            target: !lambda return int(id(endstop_${blind_number}) * pos);
+        - while:
+            condition:
+              lambda: 'return id(stepper_${blind_number}).current_position != int(id(endstop_${blind_number}) * pos);'
+            then:
+              - cover.template.publish:
+                  id: ${name}_${blind_number}
+                  position: !lambda 'return (float(float(id(stepper_${blind_number}).current_position) / float(id(endstop_${blind_number}))));' 
+              - delay: ${delay}
+        - globals.set: # Set global to current position
+            id: stepper_${blind_number}_global
+            value: !lambda return id(stepper_${blind_number}).current_position; 
+        - cover.template.publish:
+            id: ${name}_${blind_number}
+            position: !lambda 'return (float(float(id(stepper_${blind_number}).current_position) / float(id(endstop_${blind_number}))));' 
+            current_operation: IDLE
+    stop_action:
+      then:
+        - stepper.set_target:
+            id: stepper_${blind_number}
+            target: !lambda return id(stepper_${blind_number}).current_position;
+        - globals.set: # Set global to current position
+            id: stepper_${blind_number}_global
+            value: !lambda return id(stepper_${blind_number}).current_position;
+        - cover.template.publish:
+            id: ${name}_${blind_number}
+            position: !lambda 'return (float(float(id(stepper_${blind_number}).current_position) / float(id(endstop_${blind_number}))));' 
+            current_operation: IDLE
+    has_position: true
+    device_class: blind
+
+switch:
+  - platform: template
+    name: "Reset ${blind_number}"
+    id: reset_${name}_${blind_number}
+    turn_on_action:
+      - stepper.set_target:
+          id: stepper_${blind_number}
+          target: "${position_max}"
+      - wait_until: 
+          lambda: 'return id(stepper_${blind_number}).current_position == ${position_max};'
+      - delay: ${delay}
+      - stepper.set_target:
+          id: stepper_${blind_number}
+          target: '0'
+      - globals.set: # Set global to current position
+          id: stepper_${blind_number}_global
+          value: !lambda return id(stepper_${blind_number}).current_position; 
+      - globals.set: # Set toggle to CLOSED (No need for 'optimistic mode')
+          id: openclosed_${blind_number}
+          value: '0'
+      - cover.template.publish:
+          id: ${name}_${blind_number}
+          state: CLOSED
+          current_operation: IDLE
+      - switch.turn_off: reset_${name}_${blind_number}
+#   - platform: restart
+#     name: "${friendly_name} Reboot"
+
+# # Text sensors with general information.
+# text_sensor:
+#   # Expose WiFi information as sensors.
+#   - platform: wifi_info
+#     ip_address:
+#       name: Family Blinds IP
+#     ssid:
+#       name: Family Blinds SSID
+
+
+# # Sensors with general information.
+# sensor:
+#   # WiFi Signal sensor.
+#   - platform: wifi_signal
+#     name: Family Blinds WiFi Signal
+#     update_interval: 60s

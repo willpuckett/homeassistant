@@ -1,0 +1,135 @@
+external_components:
+  source: github://lumascet/esphome@stepper-tmc2209-new_uart
+  components: [uart, tmc2209]
+# external_components:
+#   # use all components from a local folder
+#   - source:  my_components
+#     components: [uart, tmc2209]
+
+esphome:
+  on_boot:
+    - tmc2209.setup:
+        id: tmc_stepper
+        microsteps: 16
+        tcool_threshold: ${tcool_threshold}
+        current: ${current}
+        stall_threshold: ${stall_threshold}
+        sense_resistor: ${sense_resistor}
+        uart_address: ${tmc_address}
+    - delay: 1s
+    # - script.execute: 
+    #     id: home
+
+esp32:
+  framework:
+    type: arduino
+
+globals:
+  - id: endstop_global # Variable for storing ENDSTOP (how far to move stepper)
+    type: int
+    restore_value: False
+    initial_value: "${position_max}"   # this is the max value
+
+# Hacky to make the uart available for the stepper
+logger:
+  hardware_uart: UART1
+  baud_rate: 0
+
+api:
+  services:
+    - service: control_stepper
+      variables:
+        target: int
+        step_speed: int
+        microsteps: int
+        tcool_threshold: int
+        stall_threshold: int
+        rms_current_amps: float
+      then:
+        - tmc2209.setup:
+            id: tmc_stepper
+            microsteps: !lambda "return microsteps;"
+            tcool_threshold: !lambda "return tcool_threshold;"
+            stall_threshold: !lambda "return stall_threshold;"
+            current: !lambda "return rms_current_amps;"
+            sense_resistor: ${sense_resistor}
+            uart_address: ${tmc_address}
+        - logger.log:
+            format: moving to %d
+            args: [target]
+        - stepper.set_speed:
+            id: tmc_stepper
+            speed: !lambda "return step_speed;"
+        - stepper.set_target:
+            id: tmc_stepper
+            target: !lambda "return target;"
+
+uart:
+  id: uart_stepper
+  tx_pin: GPIO21
+  rx_pin: GPIO20
+  baud_rate: 250000
+
+stepper:
+  - platform: tmc2209
+    steppers:
+    - id: tmc_stepper
+      step_pin: ${step_pin}
+      dir_pin:
+        number: ${dir_pin}
+        inverted: ${dir_inverted}
+      sleep_pin:
+        number: ${enable_pin}
+        inverted: true
+      acceleration: ${acceleration}
+      deceleration: ${acceleration}
+      max_speed: ${velocity}
+      sense_resistor: ${sense_resistor}
+      uart_address: ${tmc_address}
+
+binary_sensor:
+  - platform: gpio
+    id: stall_guard_sensor
+    name: StallGuard
+    pin: ${diag_pin}
+    on_press:
+      script.execute:
+        id: hit_endstop
+
+script:
+  - id: hit_endstop
+    then: 
+      if:
+        condition: 
+          lambda: 'return id(tmc_stepper).target_position < id(tmc_stepper).current_position;'
+        then:
+          - stepper.report_position:
+              id: tmc_stepper
+              position: 0
+          # It's best to call set_target directly after report_position, so that the stepper doesn't move
+          - stepper.set_target:
+              id: tmc_stepper
+              target: 0
+        # else:
+        #   - globals.set: # Change the endstop and stop there
+        #       id: endstop_global
+        #       value: !lambda 'return id(tmc_stepper).current_position;'
+        #   - stepper.report_position:
+        #       id: tmc_stepper
+        #       position: !lambda 'return id(endstop_global);'
+        #   - stepper.set_target:
+        #       id: tmc_stepper
+        #       target: !lambda 'return id(endstop_global);'
+              # target: !lambda "return id(tmc_stepper).current_position;"
+  - id: home
+    then:
+      - stepper.report_position:
+          id: tmc_stepper
+          position: 0
+      - stepper.set_target:
+          id: tmc_stepper
+          target: 100
+      - delay: 1s
+      - stepper.set_target:
+          id: tmc_stepper
+          target: !lambda 'return -id(endstop_global) - 500;'

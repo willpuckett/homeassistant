@@ -1,0 +1,177 @@
+substitutions:
+  name: "heater"
+  friendly_name: "Wall Heater"
+  board: "esp32-c3-devkitm-1"
+  position_max: "24000"
+
+# board/wifi/ota stuff
+packages:
+  device_base: !include .esp32.yaml
+  tmc_2209: !include 
+    file: .tmc_2209.yaml
+    vars:
+      enable_pin: "10"
+      step_pin: "9"
+      dir_pin: "8"
+      dir_inverted: "False"
+      diag_pin: "5"
+      acceleration: "3200 steps/s^2"
+      velocity: "1800 steps/s" # 200 (motor steps) * ${microsteps} / 2
+      current: "600ma"
+      stall_threshold: "230"
+      tcool_threshold: "550"
+      tmc_address: "0x00"
+      sense_resistor: "0.11 ohm"
+
+# Example configuration entry
+# web_server:
+#   port: 80
+
+# logger:
+#  level: VERBOSE
+#  logs:
+#    api: INFO
+#    api.service: INFO
+#    scheduler: INFO
+#    stepper: VERBOSE
+#    uart: VERBOSE
+#    sensor: INFO
+#    climate: INFO
+#    output: INFO
+#    bme280: INFO
+#    ledc: INFO
+#    mdns: INFO
+#    esp32: INFO
+#    binary_sensor: DEBUG
+
+
+
+# For BME280 temp. sensor
+i2c:
+  sda: 6
+  scl: 7
+
+# This is just a fake output to make the pid heater happy.
+# Ideally, the pin will use the onboard led, but I'm not sure what the pin number is for that...
+output:
+  - platform: ledc
+    pin: 1
+    id: heater_output
+  - platform: ledc
+    pin: 4
+    id: fan_output
+    max_power: 0.8
+
+button:
+  - platform: template
+    name: "PID Climate Autotune"
+    on_press:
+      - climate.pid.autotune: pid_climate
+  - platform: template
+    name: "home"
+    on_press:
+      - script.execute: 
+          id: home
+  - platform: template
+    name: "zero"
+    on_press:
+      - stepper.report_position:
+          id: tmc_stepper
+          position: 0
+      - stepper.set_target:
+          id: tmc_stepper
+          target: 0
+  - platform: template
+    name: "plus 1000"
+    on_press:
+      - stepper.report_position:
+          id: tmc_stepper
+          position: 0
+      - stepper.set_target:
+          id: tmc_stepper
+          target: 1000
+
+
+sensor:
+  - platform: bme280_i2c
+    temperature:
+      id: ambient_temperature
+      name: "Temperature"
+      oversampling: 16x
+    pressure:
+      name: "Pressure"
+      id: ambient_pressure
+    humidity:
+      name: "Humidity"
+      id: ambient_humidity
+    address: 0x76
+    # Default is 60s
+    update_interval: 60s
+  # This sensor takes the output from the pid heater and transforms it to step numbers
+  - platform: pid
+    name: "PID Climate Heat"
+    id: heat_float
+    type: HEAT
+    filters:
+      - or:
+        - throttle: 60s
+        - delta: 20%
+    on_value:
+      then:
+        - stepper.set_target:
+            id: tmc_stepper
+            target: !lambda "return (x * id(endstop_global)) / 100;"
+  - platform: template
+    name: "Current Stepper Position"
+    unit_of_measurement: "steps"
+    icon: "mdi:shoe-print"
+    device_class: "distance"
+    state_class: "measurement"
+    accuracy_decimals: 0
+    lambda: return id(tmc_stepper).current_position;
+    update_interval: 5s
+  - platform: template
+    name: "Target Stepper Position"
+    unit_of_measurement: "steps"
+    icon: "mdi:shoe-print"
+    device_class: "distance"
+    state_class: "measurement"
+    accuracy_decimals: 0
+    lambda: return id(tmc_stepper).target_position;
+    update_interval: 5s
+  - platform: template
+    name: "Endstop"
+    unit_of_measurement: "steps"
+    icon: "mdi:shoe-print"
+    device_class: "distance"
+    state_class: "measurement"
+    accuracy_decimals: 0
+    lambda: return id(endstop_global);
+    update_interval: 5s
+
+fan:
+  - platform: speed
+    output: fan_output
+    name: "Heater Fan"
+
+# Example configuration entry
+climate:
+  - platform: pid
+    name: "PID Climate Controller"
+    id: pid_climate
+    sensor: ambient_temperature
+    default_target_temperature: 21°C
+    heat_output: heater_output
+    control_parameters:
+      kp: 4
+      ki: 0.2
+      kd: 0.05
+      output_averaging_samples: 5      # smooth the output over 5 samples
+      derivative_averaging_samples: 5  # smooth the derivative value over 5 samples
+    deadband_parameters:
+      threshold_high: 0.5°C
+      threshold_low: -1.0°C
+      kp_multiplier: 0.5   # proportional gain reduced inside deadband
+      ki_multiplier: 0.25   # integral accumulates at only 25% of normal ki
+      kd_multiplier: 0.5   # derviative is reduced inside deadband
+      deadband_output_averaging_samples: 5   # average the output over 15 samples within the deadband
