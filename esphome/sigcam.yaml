@@ -1,0 +1,12 @@
+substitutions:
+  name: "sigcam"
+
+# board/wifi/ota stuff
+packages:
+  device_base: !include 
+    file: .esp32.yaml
+    vars:
+      friendly_name: "Sigma Camera"
+      board: "esp32-s3-devkitc-1"
+# camera definition
+  cam: !include .cam.yaml

@@ -1,0 +1,37 @@
+# # Configuration for ESPHome
+esphome:
+  # PlatformIO build options
+  platformio_options:
+    build_flags: -DBOARD_HAS_PSRAM
+    board_build.arduino.memory_type: qio_opi
+    board_build.f_flash: 80000000L
+    board_build.flash_mode: qio 
+
+# # Configuration for ESP32
+esp32:
+  framework:
+    type: arduino
+    # version: dev
+
+# Configuration for the ESP32 Camera
+esp32_camera:
+  id: espcam
+  name: ${name}
+  external_clock:
+    pin: GPIO10
+    frequency: 20MHz
+  i2c_pins:
+    sda: GPIO40
+    scl: GPIO39
+  data_pins: [GPIO15, GPIO17, GPIO18, GPIO16, GPIO14, GPIO12, GPIO11, GPIO48]
+  vsync_pin: GPIO38
+  href_pin: GPIO47
+  pixel_clock_pin: GPIO13
+  resolution: 800x600
+  
+# Configuration for the ESP32 Camera Web Server
+esp32_camera_web_server:
+  - port: 8080
+    mode: stream
+  - port: 8081
+    mode: snapshot
