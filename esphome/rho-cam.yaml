@@ -1,0 +1,11 @@
+substitutions:
+  name: "phicam"
+  friendly_name: "Phi Camera"
+  board: "esp32-s3-devkitc-1"
+
+packages:
+  # board/wifi/ota stuff
+  common: !include .common.yaml
+  esp32: !include .esp32.yaml
+  # camera definition
+  xiaocam: !include .xiao-cam.yaml

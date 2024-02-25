@@ -1,0 +1,11 @@
+substitutions:
+  name: "sigcam"
+  friendly_name: "Sigma Camera"
+  board: "esp32-s3-devkitc-1"
+
+packages:
+  # board/wifi/ota stuff
+  common: !include .common.yaml
+  device_base: !include .esp32.yaml
+  # camera definition
+  xiaocam: !include .xiao-cam.yaml
