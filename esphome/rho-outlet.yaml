@@ -4,6 +4,8 @@ substitutions:
   # device_name: "athom-rgb-light"
   board: esp8285
   sensor_update_interval: 10s
+  project_name: "Athom Technology.Smart Plug V2"
+  project_version: "2.0"
 
 packages:
   # board/wifi/ota stuff
@@ -12,4 +14,4 @@ packages:
   athomoutlet: !include .athom-outlet.yaml
 
 # wifi:
-#   use_address: test8266.local
+#   use_address: athom-smart-plug-v2-9cdeaf.local

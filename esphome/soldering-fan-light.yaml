@@ -1,16 +1,14 @@
 substitutions:
-  name: "sigmaoutlet"
-  friendly_name: "Sigma Outlet"
+  name: "solderingfan"
+  friendly_name: "Soldering Fan Light"
   board: esp8285
   sensor_update_interval: 10s
-  project_name: "Athom Technology.Smart Plug V2"
-  project_version: "2.0"
 
 packages:
   # board/wifi/ota stuff
   common: !include .common.yaml
   esp8266: !include .esp8266.yaml
-  athomoutlet: !include .athom-outlet.yaml
+  athomrgb-light: !include .athom-light-rgb.yaml
 
 # wifi:
 #   use_address: athom-smart-plug-v2-9d92a2.local

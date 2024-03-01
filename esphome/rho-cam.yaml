@@ -1,5 +1,5 @@
 substitutions:
-  name: "phicam"
+  name: "rhocam"
   friendly_name: "Phi Camera"
   board: "esp32-s3-devkitc-1"
 
