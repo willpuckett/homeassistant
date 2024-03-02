@@ -1,18 +1,7 @@
 # From https://github.com/athom-tech/athom-configs/blob/main/athom-rgb-light.yaml
 
 substitutions:
-  project_name: "Athom Technology.RGB Light Strip Controller"
-  project_version: "1.1"
   light_restore_mode: RESTORE_DEFAULT_OFF
-
-esphome:
-  project:
-    name: "${project_name}"
-    version: "${project_version}"
-
-
-preferences:
-  flash_write_interval: 1min
 
 logger:
   baud_rate: 0
@@ -22,13 +11,9 @@ wifi:
 
 captive_portal:
 
-dashboard_import:
-  package_import_url: github://athom-tech/athom-configs/athom-rgb-light.yaml
-
 binary_sensor:
   - platform: status
     name: "Status"
-
   - platform: gpio
     pin:
       number: 0
@@ -41,16 +26,33 @@ binary_sensor:
           - ON for at most 1s
           - OFF for at least 0.2s
         then:
-          - light.toggle: led
+          - ${button_action}.toggle: "${button_target}"
       - timing:
           - ON for at least 4s
         then:
           - button.press: Reset
 
+output:
+  - platform: esp8266_pwm
+    id: cw_output
+    pin: GPIO12
+  - platform: esp8266_pwm
+    id: ww_output
+    pin: GPIO4
+
+light:
+  - platform: cwww
+    id: led
+    restore_mode: ${light_restore_mode}
+    name: "Soldering Fan Lights"
+    cold_white: cw_output
+    warm_white: ww_output
+    cold_white_color_temperature: 6536 K
+    warm_white_color_temperature: 2000 K
+
 sensor:
   - platform: uptime
     name: "Uptime"
-
   - platform: wifi_signal
     name: "${friendly_name} WiFi Signal"
     update_interval: 60s
@@ -59,40 +61,10 @@ button:
   - platform: factory_reset
     name: "Reset"
     id: Reset
-
   - platform: safe_mode
     name: "Safe Mode"
     internal: false
 
-
-output:
-  - platform: esp8266_pwm
-    id: red_output
-    pin: GPIO12
-  - platform: esp8266_pwm
-    id: green_output
-    pin: GPIO4
-  - platform: esp8266_pwm
-    id: blue_output
-    pin: GPIO14
-
-light:
-  - platform: rgb
-    name: "RGB Light Strip"
-    restore_mode: ${light_restore_mode}
-    red: red_output
-    green: green_output
-    blue: blue_output
-    id: led
-
-text_sensor:
-  - platform: wifi_info
-    ip_address:
-      name: "IP Address"
-    ssid:
-      name: "Connected SSID"
-    mac_address:
-      name: "Mac Address"
      
 time:
   - platform: sntp

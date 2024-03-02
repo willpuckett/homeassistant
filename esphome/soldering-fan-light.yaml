@@ -3,6 +3,8 @@ substitutions:
   friendly_name: "Soldering Fan Light"
   board: esp8285
   sensor_update_interval: 10s
+  button_action: "fan"
+  button_target: "soldering_fan"
 
 packages:
   # board/wifi/ota stuff
@@ -10,5 +12,13 @@ packages:
   esp8266: !include .esp8266.yaml
   athomrgb-light: !include .athom-light-rgb.yaml
 
-# wifi:
-#   use_address: athom-smart-plug-v2-9d92a2.local
+output:
+  - platform: gpio
+    id: fan_output
+    pin: GPIO14
+
+fan:
+  - platform: binary
+    id: soldering_fan
+    output: fan_output
+    name: "Soldering Fan"

@@ -2,19 +2,12 @@ substitutions:
   name: "siglight"
   friendly_name: "Sigma Light"
   board: esp8285
-  sensor_update_interval: 10s
-  project_name: "Athom Technology.WS2812B Controller"
-  project_version: "1.1"
-  number_of_leds: '1'
-  led_rgb_order: GRB
+  num_leds: '1'
+  neopixel_type: GRB
   led_chipset: WS2811
-  
 
 packages:
   # board/wifi/ota stuff
   common: !include .common.yaml
   esp8266: !include .esp8266.yaml
-  athomrgbww-light: !include .athom-light-ws2812b.yaml
-
-# wifi:
-#   use_address: athom-smart-plug-v2-9d92a2.local
+  athows2812b-light: !include .athom-light-ws2812b.yaml

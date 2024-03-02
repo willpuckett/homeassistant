@@ -1,13 +1,14 @@
 substitutions:
-  name: "pedestallight"
-  friendly_name: "Pedestal Lamp"
+  name: "pendantlight"
+  friendly_name: "Pedant Lamp"
   board: esp8285
+  # sensor_update_interval: 10s
 
 packages:
   # board/wifi/ota stuff
   common: !include .common.yaml
   esp8266: !include .esp8266.yaml
-  athomrgbww-light: !include .athom-light-rgbww.yaml
+  athomrgbct-light: !include .athom-light-rgbct.yaml
 
 # wifi:
 #   use_address: athom-smart-plug-v2-9d92a2.local

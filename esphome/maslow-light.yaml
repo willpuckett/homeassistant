@@ -1,14 +1,16 @@
 substitutions:
   name: "maslow"
   friendly_name: "Maslow Light"
-  board: esp8285
-  sensor_update_interval: 10s
+  board: "esp8285"
+  sensor_update_interval: "10s"
+  num_leds: "150"
+  neopixel_type: "GRB"
 
 packages:
   # board/wifi/ota stuff
   common: !include .common.yaml
   esp8266: !include .esp8266.yaml
-  athomrgbw-light: !include .athom-light-rgbw.yaml
+  athomrgbw-light: !include .athom-light-dual-mode.yaml
 
 # wifi:
 #   use_address: athom-smart-plug-v2-9d92a2.local
