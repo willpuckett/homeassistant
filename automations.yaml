@@ -152,6 +152,24 @@
         temperature: 60
       target:
         entity_id: climate.heater_pid_climate_controller
+    - service: light.turn_off
+      metadata: {}
+      data:
+        transition: 120
+      target:
+        device_id:
+        - 141219a7800903d23cd5b2368b1b9282
+        - c44bf49b281862593a8e4329ce442698
+        - 17d1fabfa60af236d6a8c7d2143324eb
+        - 290930aed57eedb88447ab6c720cf9af
+        - 9b7d23abafde40aa251f5b81549e8ff9
+        - e80bab26dd56ddc7438d06fca427469a
+        entity_id:
+        - light.group_bathroom
+        - light.group_chandler
+        - light.group_entry
+        - light.group_kitchen
+        - light.stove_light
   - if:
     - condition: trigger
       id:
@@ -164,8 +182,7 @@
         entity_id: climate.heater_pid_climate_controller
   - service: light.turn_off
     metadata: {}
-    data:
-      transition: 120
+    data: {}
     target:
       entity_id:
       - light.group_bathroom

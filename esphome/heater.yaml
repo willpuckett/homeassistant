@@ -19,7 +19,7 @@ packages:
       velocity: "512 steps/s" # 200 (motor steps) * ${microsteps} / 2
       current: "100ma"
       stall_threshold: "10"
-      tcool_threshold: "3900"
+      tcool_threshold: "1000"
       tmc_address: "0x00"
       sense_resistor: "0.11 ohm"
 
