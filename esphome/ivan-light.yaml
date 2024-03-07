@@ -4,7 +4,7 @@ substitutions:
   board: "esp8285"
   sensor_update_interval: "10s"
   num_leds: "150"
-  neopixel_type: "GRB"
+  neopixel_type: "BRG"
 
 packages:
   # board/wifi/ota stuff
