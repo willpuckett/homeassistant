@@ -2,7 +2,7 @@ substitutions:
   name: "rholight"
   friendly_name: "Rho Light"
   board: esp8285
-  num_leds: '15'
+  num_leds: '9'
   neopixel_type: GRB
   led_chipset: WS2811
 

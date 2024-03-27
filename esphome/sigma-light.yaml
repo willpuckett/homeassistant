@@ -2,7 +2,7 @@ substitutions:
   name: "siglight"
   friendly_name: "Sigma Light"
   board: esp8285
-  num_leds: '1'
+  num_leds: '24'
   neopixel_type: GRB
   led_chipset: WS2811
 

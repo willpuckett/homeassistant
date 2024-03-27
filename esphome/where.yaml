@@ -1,8 +1,8 @@
 substitutions:
-  name: pedestal-light
-  friendly_name: Pedestal Light
+  name: where
+  friendly_name: Where
 packages:
-  Athom_Technology.RGBCCT_Bulb: github://athom-tech/athom-configs/athom-rgbct-light.yaml
+  Athom_Technology.Presence_Sensor: github://athom-tech/athom-configs/athom-presence-sensor.yaml
 esphome:
   name: ${name}
   name_add_mac_suffix: false
@@ -11,9 +11,7 @@ api:
   encryption:
     key: !secret encryption_key
 
+
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
-
-ota:
-  password: !secret ota_password
