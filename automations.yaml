@@ -108,21 +108,6 @@
       target:
         device_id: c0618f784cee97f4afa59272c6191a7f
       action: switch.turn_on
-    - device_id: 7b043f943364cacf3c00827a7355653f
-      domain: cover
-      entity_id: 4037ad983afd4ce0ad5c6bc6b252c74e
-      type: set_position
-      position: 10
-    - device_id: 7b043f943364cacf3c00827a7355653f
-      domain: cover
-      entity_id: 6ffaf38c7847023443155190bfcae42d
-      type: set_position
-      position: 50
-    - device_id: 7b043f943364cacf3c00827a7355653f
-      domain: cover
-      entity_id: a19ec029d8766f0bab706de9debcff59
-      type: set_position
-      position: 80
     - device_id: b0b04e316bb241bc98be3a12aac77931
       domain: cover
       entity_id: c6a4e14673af501c152d5ee0bdd54580
@@ -581,7 +566,7 @@
   conditions:
   - condition: time
     before: '22:30:00'
-    after: 06:00:00
+    after: 09:00:00
   actions:
   - if:
     - condition: trigger
