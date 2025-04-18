@@ -9,7 +9,7 @@ packages:
 
 esphome:
   on_boot:
-    - lambda: id(husb_01)->command_request_voltage(5);
+    # - lambda: id(husb_01)->command_request_voltage(5);
     - tmc2209.configure:
         direction: cw # or ccw
         microsteps: 1
@@ -21,9 +21,9 @@ esphome:
         threshold: 23
     - tmc2209.currents:
         standstill_mode: freewheeling
-        run_current: 0.150 
+        run_current: 0.1375 # was 0.150
         hold_current: 0
-    # - button.press: home # home right after boot
+    - button.press: probe_low # home right after boot
 
 external_components:
   - source: github://slimcdk/esphome-custom-components
@@ -34,8 +34,8 @@ external_components:
 globals:
   - id: steps
     type: int
-    restore_value: no
-    initial_value: "10000"
+    restore_value: yes
+    initial_value: "1000"
 
 i2c:
   sda: GPIO6
@@ -53,7 +53,7 @@ one_wire:
 
 husb238:
   id: husb_01
-  
+
 stepper:
   - platform: tmc2209
     id: driver
@@ -61,19 +61,15 @@ stepper:
     acceleration: 1000 steps/s^2 
     deceleration: 1000 steps/s^2 
     index_pin: GPIO3
+    diag_pin: GPIO4
     rsense: 1000 mOhm
-    on_status:
-      - if:
-          condition:
-            lambda: return code == tmc2209::DIAG_TRIGGERED;
-          then:
-            - stepper.stop: driver
-            - logger.log: DIAG_TRIGGERED
+    on_stall:
+      - stepper.stop: driver
+      - logger.log: Endstop Detected 🍍
 
 script:
   - id: move_stepper
-    mode: queued
-    max_runs: 4
+    mode: restart
     parameters:
       # use 0/false for low side endstop, 1/true for high side
       homing: bool
@@ -116,6 +112,9 @@ button:
       - stepper.report_position:
           id: driver
           position: 0
+      - logger.log:
+          format: "Probed to %d steps"
+          args: [ 'id(driver)->current_position' ]
       
   - platform: template
     name: Probe High
@@ -136,7 +135,7 @@ button:
   - platform: template
     name: "PID Climate Autotune"
     on_press:
-      - climate.pid.autotune: pid_climate  
+      - climate.pid.autotune: pid_climate
 
 sensor:
   - platform: husb238
