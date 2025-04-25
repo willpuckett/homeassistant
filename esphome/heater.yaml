@@ -7,6 +7,12 @@ substitutions:
 packages:
   device_base: !include .esp32.yaml
 
+external_components:
+  - source: github://slimcdk/esphome-custom-components
+    components: [ tmc2209_hub, tmc2209, stepper ]
+  - source: github://pr#6693
+    components: [ husb238 ]
+
 esphome:
   on_boot:
     # - lambda: id(husb_01)->command_request_voltage(5);
@@ -21,15 +27,9 @@ esphome:
         threshold: 23
     - tmc2209.currents:
         standstill_mode: freewheeling
-        run_current: 0.1375 # was 0.150
+        run_current: 0.1375 # was 0.150, which seems to oversatrate for StallGuard
         hold_current: 0
     - button.press: probe_low # home right after boot
-
-external_components:
-  - source: github://slimcdk/esphome-custom-components
-    components: [ tmc2209_hub, tmc2209, stepper ]
-  - source: github://pr#6693
-    components: [ husb238 ]
 
 globals:
   - id: steps
@@ -80,7 +80,7 @@ script:
           tcool_threshold: !lambda 'return homing ? 104 : 0;'
       - stepper.set_speed:
           id: driver
-          speed: 480 steps/s
+          speed: !lambda 'return homing ? 480 : 80;'
       - delay: 1s
       - stepper.set_target:
           id: driver
@@ -151,7 +151,7 @@ sensor:
   - platform: dallas_temp
     id: ds_temp
     filters: 
-      - lambda: return x - 13.5;
+      - lambda: return x - 5.1;
 
   # This sensor takes the output from the pid heater and transforms it to step numbers
   - platform: pid

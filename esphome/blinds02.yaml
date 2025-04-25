@@ -1,0 +1,55 @@
+# IDs...
+# … must start with a letter and can end with numbers.
+# … must not have a space in the name.
+# … can not have special characters except the underscore (“_“).
+# … must not be a keyword.
+
+# common substitutions for all covers/steppers
+# use "${substitution}" to invoke
+substitutions:
+  name: "blins02"
+  friendly_name: "Studio Blinds"
+  board: "seeed_xiao_esp32c3"
+  delay: "1s"
+
+external_components:
+  - source: github://slimcdk/esphome-custom-components
+    components: [ tmc2209_hub, tmc2209, stepper ]
+
+uart:
+  tx_pin: GPIO21
+  rx_pin: GPIO20
+  baud_rate: 230400 # 9600 -> 500k, was 500k
+
+# board/wifi/ota stuff
+packages:
+  device_base: !include .esp32.yaml
+# cover/stepper 1 definition
+  left: !include 
+    file: .ipg.yaml
+    vars:
+      blind_number: "left"
+      address: 0x00
+      index: GPIO3
+      direction: "cw"  # cw or ccw
+      sgthrs: 23
+      run_cur: 0.1375
+  center: !include 
+    file: .ipg.yaml
+    vars:
+      blind_number: "center"
+      address: 0x01
+      index: GPIO4
+      direction: "cw"  # cw or ccw
+      sgthrs: 23
+      run_cur: 0.275
+  right: !include 
+    file: .ipg.yaml
+    vars:
+      blind_number: "right"
+      address: 0x02
+      index: GPIO5
+      direction: "ccw"  # cw or ccw
+      sgthrs: 23
+      run_cur: 0.1375
+      

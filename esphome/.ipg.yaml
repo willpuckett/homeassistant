@@ -1,0 +1,187 @@
+esphome:
+  on_boot:
+    - tmc2209.configure:
+        id: stepper_${blind_number}
+        direction: ${direction}
+        microsteps: 1
+        interpolation: True
+        enable_spreadcycle: False
+        tcool_threshold: 0
+        tpwm_threshold: 0
+    - tmc2209.stallguard:
+        id: stepper_${blind_number}
+        threshold: ${sgthrs} # was 23
+    - tmc2209.currents:
+        id: stepper_${blind_number}
+        standstill_mode: freewheeling
+        run_current: ${run_cur} # was 0.150
+        hold_current: 0
+    - tmc2209.disable:
+          id: stepper_${blind_number} 
+    # - button.press: probe_low_${blind_number} # home right after boot
+
+globals:
+  - id: steps_${blind_number}
+    type: int
+    restore_value: yes
+    initial_value: "1000"
+
+stepper:
+  - platform: tmc2209
+    id: stepper_${blind_number}
+    address: ${address}
+    max_speed: 480 steps/s
+    acceleration: 1000 steps/s^2 
+    deceleration: 1000 steps/s^2 
+    index_pin: ${index}
+    rsense: 110 mOhm
+    vsense: True
+    config_dump_include_registers: True
+    on_status:
+      - if:
+          condition:
+            lambda: return code == tmc2209::DIAG_TRIGGERED;
+          then:
+            - logger.log: Endstop Detected 🍍 (DIAG_TRIGGERED)
+            - stepper.stop: stepper_${blind_number}
+
+script:
+  - id: move_stepper_${blind_number}
+    mode: restart
+    parameters:
+      # use 0/false for low side endstop, 1/true for high side
+      homing: bool
+      target: int
+    then:
+      - tmc2209.configure:
+          id: stepper_${blind_number}
+          tcool_threshold: !lambda 'return homing ? 104 : 0;'
+      - stepper.set_speed:
+          id: stepper_${blind_number}
+          speed: !lambda 'return homing ? 480 : 120;'
+      - delay: ${delay}
+      - stepper.set_target:
+          id: stepper_${blind_number}
+          target: !lambda 'return target;'
+      - while:
+          condition:
+            lambda: 'return !id(stepper_${blind_number})->has_reached_target();'
+          then:
+            - cover.template.publish:
+                id: ${name}_${blind_number}
+                position: !lambda 'return float( id(stepper_${blind_number}).current_position ) / float( id(steps_${blind_number}) );' 
+                current_operation: !lambda 'return id(stepper_${blind_number}).current_position < id(stepper_${blind_number}).target_position ? COVER_OPERATION_OPENING : COVER_OPERATION_CLOSING;'
+            - delay: ${delay}
+      - logger.log:
+          format: "Moved to %d steps"
+          args: [ 'id(stepper_${blind_number})->current_position' ]
+      - tmc2209.disable:
+          id: stepper_${blind_number} 
+      - cover.template.publish:
+          id: ${name}_${blind_number}
+          position: !lambda 'return float( id(stepper_${blind_number}).current_position ) / float( id(steps_${blind_number}) );' 
+          current_operation: IDLE
+
+button:
+  - platform: template
+    name: Probe Low ${blind_number}
+    id: probe_low_${blind_number}
+    on_press:
+      - script.execute: 
+          id: move_stepper_${blind_number}
+          homing: true
+          target: -9999999
+      - script.wait: move_stepper_${blind_number}
+      - stepper.report_position:
+          id: stepper_${blind_number}
+          position: 0
+      - logger.log:
+          format: "Probed to %d steps"
+          args: [ 'id(stepper_${blind_number})->current_position' ]
+      
+  - platform: template
+    name: Probe High ${blind_number}
+    id: probe_high_${blind_number}
+    on_press:
+      - script.execute: 
+          id: move_stepper_${blind_number}
+          homing: true
+          target: 9999999
+      - script.wait: move_stepper_${blind_number}
+      - globals.set:
+          id: steps_${blind_number}
+          value: !lambda 'return id(stepper_${blind_number})->current_position;'
+
+sensor:
+  - platform: template
+    name: "Steps ${blind_number}"
+    id: steps_display_${blind_number}
+    icon: "mdi:shoe-print"
+    accuracy_decimals: 0
+    lambda: 'return id(steps_${blind_number});'
+
+cover:
+  - platform: template
+    name: "${blind_number}"
+    id: ${name}_${blind_number}
+    open_action:
+      then:
+        - logger.log: "Opening"
+        - button.press: probe_high_${blind_number}
+    close_action:
+      then:
+        - logger.log: "Closing"
+        - button.press: probe_low_${blind_number}
+    position_action:
+      then:
+        - logger.log: "Jostling"
+        - script.execute: 
+            id: move_stepper_${blind_number}
+            homing: false
+            target: !lambda return int(id(steps_${blind_number}) * pos);
+    stop_action:
+      then:
+        - script.execute: 
+            id: move_stepper_${blind_number}
+            homing: false
+            target: !lambda return id(stepper_${blind_number}).current_position;
+    has_position: true
+    device_class: blind
+
+switch:
+  - platform: template
+    name: "Reset ${blind_number}"
+    id: reset_${name}_${blind_number}
+    turn_on_action:
+      - button.press: probe_low_${blind_number}
+      - script.wait: move_stepper_${blind_number}
+      - delay: ${delay}
+      - button.press: probe_high_${blind_number}
+      - script.wait: move_stepper_${blind_number}
+      - delay: ${delay}
+      - button.press: probe_low_${blind_number}
+      - script.wait: move_stepper_${blind_number}
+      - switch.turn_off: reset_${name}_${blind_number}
+
+number:
+  - platform: template
+    name: SGTHRS_${blind_number}
+    min_value: 0
+    max_value: 255
+    step: 1
+    lambda: return id(stepper_${blind_number})->read_register(SGTHRS);
+    update_interval: 10s
+    set_action:
+      - lambda: id(stepper_${blind_number})->write_register(SGTHRS, x);
+
+  - platform: template
+    name: "Run Current ${blind_number}"
+    min_value: 0
+    max_value: 31
+    step: 1
+    lambda: return id(stepper_${blind_number})->read_field(IRUN_FIELD);
+    update_interval: 10s
+    set_action:
+      - tmc2209.currents:
+          id: stepper_${blind_number}
+          irun: !lambda "return x;"

@@ -7,12 +7,12 @@ substitutions:
 packages:
   device_base: !include .esp32.yaml
 
-esp32:
-  framework:
-    type: esp-idf
+# esp32:
+#   framework:
+#     type: esp-idf
 
-logger:
-  level: DEBUG
+# logger:
+#   level: DEBUG
 
 
 esphome:
@@ -25,12 +25,12 @@ esphome:
         tcool_threshold: 0
         tpwm_threshold: 0
     - tmc2209.stallguard:
-        threshold: 23
+        threshold: 45
     - tmc2209.currents:
         standstill_mode: freewheeling
-        run_current: 0.150 # was 0.240
+        run_current: 0.1375 # was 0.240
         hold_current: 0
-    - button.press: home # home right after boot
+    # - button.press: home # home right after boot
 
 external_components:
   - source: github://slimcdk/esphome-custom-components
@@ -61,44 +61,49 @@ uart:
   rx_pin: GPIO20
   baud_rate: 500000 # 9600 -> 500k
 
-one_wire:
-  - platform: gpio
-    pin: GPIO10
+# one_wire:
+#   - platform: gpio
+#     pin: GPIO10
+
+# husb238:
+#   id: husb_01
+
   
 stepper:
   - platform: tmc2209
     id: driver
     # https://www.klipper3d.org/TMC_Drivers.html#limitations
-    max_speed: 2000 steps/s # was 4000
+    max_speed: 480 steps/s # was 4000
     acceleration: 1000 steps/s^2 # was 2500
     deceleration: 1000 steps/s^2 # was 2500
     index_pin: GPIO3
-    diag_pin: GPIO4
-    rsense: 1000 mOhm
-    config_dump_include_registers: False
+    # diag_pin: GPIO4
+    # Testing btt with vsense
+    rsense: 110 mOhm
+    config_dump_include_registers: True
     vsense: False
     analog_current_scale: False
-    on_stall:
-      - logger.log: "Motor stalled!"
-      - if:
-          condition:
-            lambda: return !id(has_homed);
-          then:
-            - stepper.stop: driver
-            - tmc2209.configure:
-                direction: cw # or ccw
-                microsteps: 1
-                interpolation: True
-                enable_spreadcycle: False
-                tcool_threshold: 0
-            - stepper.report_position:
-                id: driver
-                position: 0
-            - globals.set:
-                id: has_homed
-                value: "true"
-            - logger.log: "Home position set"
-            - tmc2209.disable
+    # on_stall:
+    #   - logger.log: "Motor stalled!"
+    #   - if:
+    #       condition:
+    #         lambda: return !id(has_homed);
+    #       then:
+    #         - stepper.stop: driver
+    #         - tmc2209.configure:
+    #             direction: cw # or ccw
+    #             microsteps: 1
+    #             interpolation: True
+    #             enable_spreadcycle: False
+    #             tcool_threshold: 0
+    #         - stepper.report_position:
+    #             id: driver
+    #             position: 0
+    #         - globals.set:
+    #             id: has_homed
+    #             value: "true"
+    #         - logger.log: "Home position set"
+    #         - tmc2209.disable
     on_status:
       - logger.log:
           format: "Driver is reporting an update! (code %d)"
@@ -108,6 +113,18 @@ stepper:
             lambda: return code == tmc2209::DIAG_TRIGGERED;
           then:
             - logger.log: DIAG_TRIGGERED
+            - stepper.stop: driver
+            - tmc2209.configure:
+                tcool_threshold: 0
+            - stepper.report_position:
+                id: driver
+                position: 0
+            - globals.set:
+                id: has_homed
+                value: "true"
+            - logger.log: "Home position set"
+            - tmc2209.disable:
+                id: driver
       - if:
           condition:
             lambda: return code == tmc2209::DIAG_TRIGGER_CLEARED;
@@ -338,35 +355,31 @@ button:
           target: !lambda return id(driver)->current_position +1000;
       # - tmc2209.disable
         
-
-husb238:
-  id: husb_01
-
 binary_sensor:
-  - platform: husb238
-    attached: "PD Attached"
+  # - platform: husb238
+  #   attached: "PD Attached"
 
   - platform: template
     name: "Has Homed"
     lambda: return id(has_homed);
 
 text_sensor:
-  - platform: husb238
-    status: "Last request status"
-    capabilities: "Capabilities"
+  # - platform: husb238
+  #   status: "Last request status"
+  #   capabilities: "Capabilities"
 
 select:
-  - platform: husb238
-    voltage: "Voltage selector"
+  # - platform: husb238
+  #   voltage: "Voltage selector"
 
 sensor:
-  - platform: husb238
-    voltage: "Contracted Voltage"
-    current: "Contracted Current"
-    selected_voltage: "Selected Voltage"
+  # - platform: husb238
+  #   voltage: "Contracted Voltage"
+  #   current: "Contracted Current"
+  #   selected_voltage: "Selected Voltage"
 
-  - platform: dallas_temp
-    name: temperature
+  # - platform: dallas_temp
+  #   name: temperature
 
   - platform: tmc2209
     type: stallguard_result
