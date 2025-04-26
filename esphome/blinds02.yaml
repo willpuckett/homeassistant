@@ -28,28 +28,28 @@ packages:
   left: !include 
     file: .ipg.yaml
     vars:
-      blind_number: "left"
+      blind_number: "Left"
       address: 0x00
       index: GPIO3
       direction: "cw"  # cw or ccw
-      sgthrs: 23
+      sgthrs: 34
       run_cur: 0.1375
   center: !include 
     file: .ipg.yaml
     vars:
-      blind_number: "center"
+      blind_number: "Center"
       address: 0x01
       index: GPIO4
       direction: "cw"  # cw or ccw
-      sgthrs: 23
+      sgthrs: 34
       run_cur: 0.275
   right: !include 
     file: .ipg.yaml
     vars:
-      blind_number: "right"
+      blind_number: "Right"
       address: 0x02
       index: GPIO5
       direction: "ccw"  # cw or ccw
-      sgthrs: 23
+      sgthrs: 42
       run_cur: 0.1375
       

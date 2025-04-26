@@ -127,7 +127,14 @@ cover:
     open_action:
       then:
         - logger.log: "Opening"
-        - button.press: probe_high_${blind_number}
+        - script.execute: 
+            id: move_stepper_${blind_number}
+            homing: True
+            target: !lambda return id(steps_${blind_number});
+        - script.wait: move_stepper_${blind_number}
+        - stepper.report_position:
+            id: stepper_${blind_number}
+            position: !lambda 'return id(steps_${blind_number});'
     close_action:
       then:
         - logger.log: "Closing"
@@ -158,9 +165,9 @@ switch:
       - delay: ${delay}
       - button.press: probe_high_${blind_number}
       - script.wait: move_stepper_${blind_number}
-      - delay: ${delay}
-      - button.press: probe_low_${blind_number}
-      - script.wait: move_stepper_${blind_number}
+      # - delay: ${delay}
+      # - button.press: probe_low_${blind_number}
+      # - script.wait: move_stepper_${blind_number}
       - switch.turn_off: reset_${name}_${blind_number}
 
 number:
