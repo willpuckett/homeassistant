@@ -35,7 +35,7 @@ stepper:
     deceleration: 1000 steps/s^2 
     index_pin: ${index}
     rsense: 110 mOhm
-    vsense: True
+    vsense: False
     config_dump_include_registers: True
     on_status:
       - if:
