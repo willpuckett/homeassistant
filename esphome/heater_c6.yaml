@@ -1,7 +1,7 @@
 substitutions:
-  name: "heater"
-  friendly_name: "Wall Heater"
-  board: "seeed_xiao_esp32c3"
+  name: "heaterc6"
+  friendly_name: "Wall Heater c6"
+  board: "seeed_xiao_esp32c6"
 
 # board/wifi/ota stuff
 packages:
@@ -10,9 +10,10 @@ packages:
 external_components:
   - source: github://slimcdk/esphome-custom-components
     components: [ tmc2209_hub, tmc2209, stepper ]
-  - source: github://pr#6693
-    components: [ husb238 ]
-
+  # - source: github://pr#6693
+    # components: [ husb238 ]
+  - source: husb_test/esphome/components
+    components: [husb238]
 esphome:
   on_boot:
     # - lambda: id(husb_01)->command_request_voltage(5);
@@ -38,18 +39,18 @@ globals:
     initial_value: "1000"
 
 i2c:
-  sda: GPIO6
-  scl: GPIO7 
+  sda: GPIO22
+  scl: GPIO23
   frequency: 800kHz
 
 uart:
-  tx_pin: GPIO21
-  rx_pin: GPIO20
+  tx_pin: GPIO16
+  rx_pin: GPIO17
   baud_rate: 500000 # 9600 -> 500k
 
 one_wire:
   - platform: gpio
-    pin: GPIO10
+    pin: GPIO18
 
 husb238:
   id: husb_01
@@ -60,8 +61,8 @@ stepper:
     max_speed: 480 steps/s
     acceleration: 1000 steps/s^2 
     deceleration: 1000 steps/s^2 
-    index_pin: GPIO3
-    diag_pin: GPIO4
+    index_pin: GPIO1
+    diag_pin: GPIO2
     rsense: 1000 mOhm
     on_stall:
       - stepper.stop: driver
@@ -173,7 +174,8 @@ sensor:
 # Ideally, the pin will use the onboard led, but I'm not sure what the pin number is for that...
 output:
   - platform: ledc
-    pin: GPIO2
+    pin: GPIO15
+    inverted: true
     id: heater_output
 
 # Example configuration entry
