@@ -10,7 +10,7 @@ substitutions:
   name: "blinds01"
   friendly_name: "Kitchen Blinds"
   board: "seeed_xiao_esp32c3"
-  delay: "1 s"
+  delay: "1s"
                 
 # board/wifi/ota stuff
 packages:

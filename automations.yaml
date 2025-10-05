@@ -645,3 +645,27 @@
           - cover.blinds02_left
           - cover.blinds02_center
   mode: restart
+- id: '1759634193837'
+  alias: HomeKit - Sensors Collection
+  description: Processes temperature and humidity data from the HomePod Mini
+  triggers:
+  - trigger: time_pattern
+    minutes: /2
+    id: time
+  actions:
+  - action: input_boolean.turn_on
+    metadata: {}
+    data: {}
+    target:
+      entity_id: input_boolean.homekit_sensors_update
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 5
+      milliseconds: 0
+  - action: input_boolean.turn_off
+    metadata: {}
+    data: {}
+    target:
+      entity_id: input_boolean.homekit_sensors_update
+  mode: single
