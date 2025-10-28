@@ -1,3 +1,21 @@
+# Ov5640 xiao cam with esphome
+# esp32_camera:
+#   name: camera
+#   external_clock:
+#     pin: GPIO15
+#     frequency: 20MHz
+#   i2c_pins:
+#     sda: GPIO22
+#     scl: GPIO23
+#   data_pins: [GPIO2, GPIO14, GPIO35, GPIO12, GPIO27, GPIO33, GPIO34 , GPIO39]
+#   vsync_pin: GPIO18
+#   href_pin: GPIO36
+#   pixel_clock_pin: GPIO26
+#   reset_pin: GPIO5
+#   resolution: 800x600
+
+# https://community.home-assistant.io/t/esp32-camera-ov5640/507409/3
+
 # # Configuration for ESPHome
 esphome:
   # PlatformIO build options
