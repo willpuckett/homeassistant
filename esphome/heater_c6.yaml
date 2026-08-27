@@ -75,7 +75,7 @@ script:
       homing: bool
       target: int
     then:
-      - lambda: id(husb_01)->command_request_voltage(20);
+      - lambda: id(husb_01)->command_request_voltage(9);
       - tmc2209.configure:
           tcool_threshold: !lambda 'return homing ? 104 : 0;'
       - stepper.set_speed:
@@ -186,15 +186,15 @@ climate:
     default_target_temperature: 21°C
     heat_output: heater_output
     control_parameters:
-      kp: 4
-      ki: 0.4
-      kd: 0.5
-      output_averaging_samples: 5      # smooth the output over 5 samples
+      kp: 8.0
+      ki: 0.3
+      kd: 1.0
+      output_averaging_samples: 10      # smooth the output over 5 samples
       derivative_averaging_samples: 5  # smooth the derivative value over 5 samples
-    # deadband_parameters:
-    #   threshold_high: 0.5°C
-    #   threshold_low: -1.0°C
-    #   kp_multiplier: 0.5   # proportional gain reduced inside deadband
-    #   ki_multiplier: 0.25   # integral accumulates at only 25% of normal ki
-    #   kd_multiplier: 0.5   # derviative is reduced inside deadband
-    #   deadband_output_averaging_samples: 5   # average the output over 15 samples within the deadband
+    deadband_parameters:
+      threshold_high: 0.5°C
+      threshold_low: -0.5°C
+      kp_multiplier: 0.2   # proportional gain reduced inside deadband
+      ki_multiplier: 0.2   # integral accumulates at only 25% of normal ki
+      kd_multiplier: 0     # derviative is reduced inside deadband
+      deadband_output_averaging_samples: 30   # average the output over 15 samples within the deadband
